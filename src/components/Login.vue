@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div id="login-component">
         <main>
 
             <form @submit.prevent="authStore.onLogin(form)">
@@ -74,5 +74,9 @@
     .submit {
         margin: 20px 0 20px 0;
         width: 20%;
+    }
+
+    #login-component {
+        margin-top: 50px;
     }
 </style>

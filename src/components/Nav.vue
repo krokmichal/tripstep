@@ -2,8 +2,8 @@
     <div>
         <nav class="navbar navbar-expand-lg fixed-top">
             <div id="navigation" class="container navbar">
-                <a class="navbar-brand" href="#">
-                    tripstep</a>
+                <a class="navbar-brand" href="#"><router-link to="/">tripstep</router-link>
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
@@ -31,7 +31,7 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <form class="d-flex" role="search">
                         <ul class="navbar-nav">
-                            <li class="nav-item">
+                            <li id="sign-in" class="nav-item">
                                 <router-link to="/login">Sign In</router-link>
                             </li>
                         </ul>
@@ -72,6 +72,10 @@
         font-size: 1.1rem;
     }
 
+    .navbar {
+        background-color: white;
+    }
+
     .white-a {
         color: white;
     }
@@ -95,5 +99,10 @@
 
     .d-flex .nav-item {
         margin-right: 1em;
+    }
+
+    #sign-in {
+        display: flex;
+        align-items: center;
     }
 </style>
