@@ -35,47 +35,94 @@
                         <label for="notes" class="form-label">Notes</label>
                         <textarea class="form-control" id="notes" v-model="trip.notes" rows="3"></textarea>
                     </div>
-                    <div class="row mt-5">
-                        <div class="col-12">
-                            <h3>Budget</h3>
-                            <p><strong>Total Spent:</strong> {{ totalSpent.toFixed(2) }}$</p>
-                            <button class="btn btn-success" @click="showAddExpense = true">+ Add expense</button>
-
-                            <div v-if="showAddExpense" class="mt-3">
-                                <h4>Add expense</h4>
-                                <div class="mb-3">
-                                    <label for="expenseAmount" class="form-label">Amount</label>
-                                    <input type="number" class="form-control" id="expenseAmount"
-                                        v-model="newExpense.amount" />
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Category</label>
-                                    <div class="d-flex flex-wrap">
-                                        <div v-for="category in expenseCategories" :key="category"
-                                            class="expense-category"
-                                            :class="{ selected: newExpense.category === category }"
-                                            @click="selectCategory(category)">
-                                            {{ category }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary" @click="addExpense">Done</button>
-                            </div>
-
-                            <ul class="list-group mt-3">
-                                <li class="list-group-item" v-for="expense in trip.expenses" :key="expense.id">
-                                    {{ expense.category }}: {{ expense.amount.toFixed(2) }}$
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
                     <button type="submit" class="btn btn-primary">{{ isEdit ? 'Save changes' : 'Save trip' }}</button>
                     <button type="button" class="btn btn-secondary" @click="searchFlights">Wyszukaj</button>
                 </form>
             </div>
         </div>
 
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3>Budget</h3>
+                <p><strong>Total Spent:</strong> {{ totalSpent.toFixed(2) }}$</p>
+                <div class="progress mb-3">
+                    <div class="progress-bar bg-success" role="progressbar" :style="{ width: budgetPercentage + '%' }">
+                        {{ budgetPercentage.toFixed(0) }}%
+                    </div>
+                </div>
+                <p v-if="trip.budget !== null && !isNaN(trip.budget)">
+                    <strong>Budget:</strong> {{ trip.budget.toFixed(2) }}$
+                </p>
+                <button class="btn btn-success" @click="showAddExpense = true">+ Add expense</button>
+                <button class="btn btn-info" @click="showSetBudget = true">Set budget</button>
 
+                <div v-if="showAddExpense" class="modal" tabindex="-1" role="dialog" style="display: block;">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Add Expense</h5>
+                                <button type="button" class="close" @click="cancelAddExpense">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="expenseAmount">Amount ($)</label>
+                                    <input type="number" class="form-control" id="expenseAmount"
+                                        v-model="newExpense.amount" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="expenseCategory">Category</label>
+                                    <div class="row">
+                                        <div v-for="category in expenseCategories" :key="category"
+                                            class="col-4 expense-category"
+                                            :class="{ 'selected': newExpense.category === category }"
+                                            @click="selectCategory(category)">
+                                            {{ category }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary"
+                                    @click="cancelAddExpense">Cancel</button>
+                                <button type="button" class="btn btn-primary" @click="addExpense">Done</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="showSetBudget" class="modal" tabindex="-1" role="dialog" style="display: block;">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Set Budget</h5>
+                                <button type="button" class="close" @click="cancelSetBudget">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label for="budgetAmount">Budget Amount ($)</label>
+                                    <input type="number" class="form-control" id="budgetAmount" v-model="newBudget"
+                                        required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" @click="cancelSetBudget">Cancel</button>
+                                <button type="button" class="btn btn-primary" @click="saveBudget">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <ul class="list-group mt-3">
+                    <li class="list-group-item" v-for="expense in trip.expenses" :key="expense.id">
+                        {{ expense.category }}: {{ expense.amount.toFixed(2) }}$
+                    </li>
+                </ul>
+            </div>
+        </div>
 
         <div class="row" v-if="flights.length">
             <div class="col-12">
@@ -99,7 +146,7 @@
 </template>
 
 <script setup>
-    import { ref, computed, onMounted } from 'vue'; // Dodano import computed
+    import { ref, computed, onMounted } from 'vue';
     import axios from 'axios';
     import { useRouter, useRoute } from 'vue-router';
 
@@ -115,15 +162,26 @@
         arrivalCity: '',
         numberOfPeople: 1,
         notes: '',
-        expenses: []  // Upewnij się, że expenses jest zainicjalizowane jako tablica
+        budget: null,
+        expenses: []
     });
     const flights = ref([]);
     const showAddExpense = ref(false);
+    const showSetBudget = ref(false);
     const newExpense = ref({ amount: 0, category: '' });
+    const newBudget = ref(null);
     const expenseCategories = ['Flights', 'Lodging', 'Car rental', 'Transit', 'Food', 'Sightseeing'];
 
     const totalSpent = computed(() => {
         return trip.value.expenses.reduce((total, expense) => total + expense.amount, 0);
+    });
+
+    const budgetPercentage = computed(() => {
+        if (trip.value.budget !== null && trip.value.budget > 0) {
+            return (totalSpent.value / trip.value.budget) * 100;
+        } else {
+            return 0;
+        }
     });
 
     const selectCategory = (category) => {
@@ -139,12 +197,24 @@
         }
     };
 
+    const saveBudget = () => {
+        if (newBudget.value !== null) {
+            trip.value.budget = parseFloat(newBudget.value);
+            showSetBudget.value = false;
+        }
+    };
+
+    const cancelSetBudget = () => {
+        newBudget.value = null;
+        showSetBudget.value = false;
+    };
+
     onMounted(() => {
         if (isEdit.value) {
             const savedTrip = JSON.parse(localStorage.getItem('tripToEdit'));
             if (savedTrip) {
                 trip.value = savedTrip;
-                if (!trip.value.expenses) {  // Upewnij się, że expenses jest zainicjalizowane jako tablica
+                if (!trip.value.expenses) {
                     trip.value.expenses = [];
                 }
             }
@@ -184,9 +254,8 @@
 
         try {
             const response = await axios.request(options);
-            console.log(response.data); // Logowanie odpowiedzi do konsoli
+            console.log(response.data);
 
-            // Sprawdzenie struktury odpowiedzi i przypisanie wyników do flights
             flights.value = response.data.data.everywhereDestination.results.map(result => ({
                 title: result.content.location?.name || 'No Title',
                 price: result.content.flightQuotes?.direct?.price || 'No Price',
@@ -231,6 +300,14 @@
     .expense-category.selected {
         background-color: #007bff;
         color: white;
+    }
+
+    .progress-bar {
+        transition: width 0.3s ease-in-out;
+    }
+
+    .bg-danger {
+        background-color: #dc3545 !important;
     }
 
 </style>
