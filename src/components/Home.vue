@@ -47,6 +47,7 @@
                             <p><strong>Departure City:</strong> {{ trip.departureCity }}</p>
                             <p><strong>Arrival City:</strong> {{ trip.arrivalCity }}</p>
                             <p><strong>Number of People:</strong> {{ trip.numberOfPeople }}</p>
+                            <p><strong>Notes:</strong> {{ trip.notes ? 'Yes' : 'No' }}</p>
                             <button class="button" @click="editTrip(index)">Edit trip</button>
                             <button class="button btn-danger" @click="confirmDeleteTrip(index)">Delete trip</button>
                         </div>
@@ -97,7 +98,6 @@
     });
 </script>
 
-
 <style>
     #app {
         padding-top: 20px;
@@ -111,20 +111,16 @@
         margin: 10vh 0 10vh;
     }
 
-
     .hero-info {
         display: flex;
         flex-direction: column;
         justify-content: center;
-
-
     }
 
     .hero-text {
         font-weight: 700;
         font-size: 2.5rem;
     }
-
 
     #hero-img {
         width: 400px;
@@ -137,13 +133,9 @@
         background-color: var(--banner);
     }
 
-
     .text-logo span {
         color: var(--orange);
         font-size: 4rem;
         font-weight: 900;
     }
-
-
-
 </style>

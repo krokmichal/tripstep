@@ -6,41 +6,82 @@
                 <form @submit.prevent="saveTrip">
                     <div class="mb-3">
                         <label for="tripName" class="form-label">Trip Name</label>
-                        <input type="text" class="form-control" id="tripName" v-model="trip.name" required>
+                        <input type="text" class="form-control" id="tripName" v-model="trip.name" required />
                     </div>
                     <div class="mb-3">
                         <label for="departureDate" class="form-label">Departure Date</label>
                         <input type="date" class="form-control" id="departureDate" v-model="trip.departureDate"
-                            required>
+                            required />
                     </div>
                     <div class="mb-3">
                         <label for="returnDate" class="form-label">Return Date</label>
-                        <input type="date" class="form-control" id="returnDate" v-model="trip.returnDate" required>
+                        <input type="date" class="form-control" id="returnDate" v-model="trip.returnDate" required />
                     </div>
                     <div class="mb-3">
                         <label for="departureCity" class="form-label">Departure City</label>
                         <input type="text" class="form-control" id="departureCity" v-model="trip.departureCity"
-                            required>
+                            required />
                     </div>
                     <div class="mb-3">
                         <label for="arrivalCity" class="form-label">Arrival City</label>
-                        <input type="text" class="form-control" id="arrivalCity" v-model="trip.arrivalCity" required>
+                        <input type="text" class="form-control" id="arrivalCity" v-model="trip.arrivalCity" required />
                     </div>
                     <div class="mb-3">
                         <label for="numberOfPeople" class="form-label">Number of People</label>
                         <input type="number" class="form-control" id="numberOfPeople" v-model="trip.numberOfPeople"
-                            required>
+                            required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" v-model="trip.notes" rows="3"></textarea>
+                    </div>
+                    <div class="row mt-5">
+                        <div class="col-12">
+                            <h3>Budget</h3>
+                            <p><strong>Total Spent:</strong> {{ totalSpent.toFixed(2) }}$</p>
+                            <button class="btn btn-success" @click="showAddExpense = true">+ Add expense</button>
+
+                            <div v-if="showAddExpense" class="mt-3">
+                                <h4>Add expense</h4>
+                                <div class="mb-3">
+                                    <label for="expenseAmount" class="form-label">Amount</label>
+                                    <input type="number" class="form-control" id="expenseAmount"
+                                        v-model="newExpense.amount" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Category</label>
+                                    <div class="d-flex flex-wrap">
+                                        <div v-for="category in expenseCategories" :key="category"
+                                            class="expense-category"
+                                            :class="{ selected: newExpense.category === category }"
+                                            @click="selectCategory(category)">
+                                            {{ category }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" @click="addExpense">Done</button>
+                            </div>
+
+                            <ul class="list-group mt-3">
+                                <li class="list-group-item" v-for="expense in trip.expenses" :key="expense.id">
+                                    {{ expense.category }}: {{ expense.amount.toFixed(2) }}$
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary">{{ isEdit ? 'Save changes' : 'Save trip' }}</button>
                     <button type="button" class="btn btn-secondary" @click="searchFlights">Wyszukaj</button>
                 </form>
             </div>
         </div>
+
+
+
         <div class="row" v-if="flights.length">
             <div class="col-12">
                 <h3>Wyniki wyszukiwania:</h3>
                 <div class="card mb-3" v-for="(flight, index) in flights" :key="index">
-                    <img :src="flight.imageUrl" class="card-img-top" alt="Flight Image" v-if="flight.imageUrl">
+                    <img :src="flight.imageUrl" class="card-img-top" alt="Flight Image" v-if="flight.imageUrl" />
                     <div class="card-body">
                         <h5 class="card-title">{{ flight.title }}</h5>
                         <p class="card-text">Departure: {{ flight.departureDate }}</p>
@@ -49,19 +90,16 @@
                         <p class="card-text">To: {{ flight.arrivalCity }}</p>
                         <p class="card-text">Adults: {{ flight.numberOfPeople }}</p>
                         <p class="card-text">Price: {{ flight.price }}</p>
-                        <p class="card-text">Carrier: {{ flight.carrier }}</p>
                         <button class="btn btn-primary" @click="bookFlight(flight)">Book Now</button>
                     </div>
                 </div>
             </div>
         </div>
-
-
     </div>
 </template>
 
 <script setup>
-    import { ref, onMounted } from 'vue';
+    import { ref, computed, onMounted } from 'vue'; // Dodano import computed
     import axios from 'axios';
     import { useRouter, useRoute } from 'vue-router';
 
@@ -75,15 +113,40 @@
         returnDate: '',
         departureCity: '',
         arrivalCity: '',
-        numberOfPeople: 1
+        numberOfPeople: 1,
+        notes: '',
+        expenses: []  // Upewnij się, że expenses jest zainicjalizowane jako tablica
     });
     const flights = ref([]);
+    const showAddExpense = ref(false);
+    const newExpense = ref({ amount: 0, category: '' });
+    const expenseCategories = ['Flights', 'Lodging', 'Car rental', 'Transit', 'Food', 'Sightseeing'];
+
+    const totalSpent = computed(() => {
+        return trip.value.expenses.reduce((total, expense) => total + expense.amount, 0);
+    });
+
+    const selectCategory = (category) => {
+        newExpense.value.category = category;
+    };
+
+    const addExpense = () => {
+        if (newExpense.value.amount > 0 && newExpense.value.category) {
+            trip.value.expenses.push({ ...newExpense.value, id: Date.now() });
+            newExpense.value.amount = 0;
+            newExpense.value.category = '';
+            showAddExpense.value = false;
+        }
+    };
 
     onMounted(() => {
         if (isEdit.value) {
             const savedTrip = JSON.parse(localStorage.getItem('tripToEdit'));
             if (savedTrip) {
                 trip.value = savedTrip;
+                if (!trip.value.expenses) {  // Upewnij się, że expenses jest zainicjalizowane jako tablica
+                    trip.value.expenses = [];
+                }
             }
         }
     });
@@ -105,13 +168,12 @@
     const searchFlights = async () => {
         const options = {
             method: 'GET',
-            url: 'https://sky-scanner3.p.rapidapi.com/flights/search-everywhere',
+            url: 'https://sky-scanner3.p.rapidapi.com/flights/search-roundtrip',
             params: {
                 fromEntityId: trip.value.departureCity,
                 toEntityId: trip.value.arrivalCity,
-                type: 'roundtrip',
-                year: trip.value.departureDate.split('-')[0],
-                month: trip.value.departureDate.split('-')[1],
+                departDate: trip.value.departureDate,
+                returnDate: trip.value.returnDate,
                 adults: trip.value.numberOfPeople
             },
             headers: {
@@ -122,30 +184,53 @@
 
         try {
             const response = await axios.request(options);
-            console.log(response.data);  // Logowanie odpowiedzi do konsoli
+            console.log(response.data); // Logowanie odpowiedzi do konsoli
 
             // Sprawdzenie struktury odpowiedzi i przypisanie wyników do flights
             flights.value = response.data.data.everywhereDestination.results.map(result => ({
-                title: result.location?.name || 'No Title',
-                price: result.flightQuotes?.cheapest?.price || 'No Price',
-                carrier: result.flightQuotes?.cheapest?.carrier || 'No Carrier',
+                title: result.content.location?.name || 'No Title',
+                price: result.content.flightQuotes?.direct?.price || 'No Price',
                 departureDate: trip.value.departureDate,
                 arrivalDate: trip.value.returnDate,
                 departureCity: trip.value.departureCity,
                 arrivalCity: trip.value.arrivalCity,
                 numberOfPeople: trip.value.numberOfPeople,
-                imageUrl: result.image?.url || ''
+                imageUrl: result.content.image?.url || ''
             }));
         } catch (error) {
             console.error(error);
         }
     };
 
-
-
-
-
     const bookFlight = (flight) => {
         window.open('https://www.skyscanner.com', '_blank');
     };
 </script>
+
+<style>
+    #app {
+        padding-top: 20px;
+    }
+
+    .hero-section {
+        height: 97vh;
+    }
+
+    .hero-section .row {
+        margin: 10vh 0 10vh
+    }
+
+    .expense-category {
+        margin: 5px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .expense-category.selected {
+        background-color: #007bff;
+        color: white;
+    }
+
+</style>
