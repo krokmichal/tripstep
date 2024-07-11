@@ -9,12 +9,13 @@
                         </div>
                     </div>
                     <div class="col-7">
-                        <img id="hero-img" :src="heroImage" alt="" />
+                        <img id="hero-img" :src="heroImage" alt="Hero Image" />
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-8 offset-2">
-                        <button class="button" type="submit">Start now</button>
+                        <button class="button" type="submit"><router-link to="/register" class="white-a">Start
+                                now</router-link></button>
                     </div>
                 </div>
             </div>
@@ -48,6 +49,8 @@
                             <p><strong>Arrival City:</strong> {{ trip.arrivalCity }}</p>
                             <p><strong>Number of People:</strong> {{ trip.numberOfPeople }}</p>
                             <p><strong>Notes:</strong> {{ trip.notes ? 'Yes' : 'No' }}</p>
+                            <p><strong>Budget:</strong> {{ trip.budget ? trip.budget.toFixed(2) + ' $' : 'Not set' }}
+                            </p>
                             <button class="button" @click="editTrip(index)">Edit trip</button>
                             <button class="button btn-danger" @click="confirmDeleteTrip(index)">Delete trip</button>
                         </div>

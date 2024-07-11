@@ -56,12 +56,13 @@
                 <button class="btn btn-success" @click="showAddExpense = true">+ Add expense</button>
                 <button class="btn btn-info" @click="showSetBudget = true">Set budget</button>
 
-                <div v-if="showAddExpense" class="modal" tabindex="-1" role="dialog" style="display: block;">
+                <div v-if="showAddExpense || showEditExpense" class="modal" tabindex="-1" role="dialog"
+                    style="display: block;">
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Add Expense</h5>
-                                <button type="button" class="close" @click="cancelAddExpense">
+                                <h5 class="modal-title">{{ showEditExpense ? 'Edit Expense' : 'Add Expense' }}</h5>
+                                <button type="button" class="close" @click="cancelExpense">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </div>
@@ -84,9 +85,11 @@
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary"
-                                    @click="cancelAddExpense">Cancel</button>
-                                <button type="button" class="btn btn-primary" @click="addExpense">Done</button>
+                                <button type="button" class="btn btn-secondary" @click="cancelExpense">Cancel</button>
+                                <button type="button" class="btn btn-primary"
+                                    @click="showEditExpense ? saveEditedExpense() : addExpense()">
+                                    {{ showEditExpense ? 'Save Changes' : 'Done' }}
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -117,8 +120,15 @@
                 </div>
 
                 <ul class="list-group mt-3">
-                    <li class="list-group-item" v-for="expense in trip.expenses" :key="expense.id">
-                        {{ expense.category }}: {{ expense.amount.toFixed(2) }}$
+                    <li class="list-group-item d-flex justify-content-between align-items-center"
+                        v-for="(expense, index) in trip.expenses" :key="expense.id">
+                        <div>
+                            {{ expense.category }}: {{ expense.amount.toFixed(2) }}$
+                        </div>
+                        <div>
+                            <button class="btn btn-info btn-sm" @click="editExpense(index)">Edit</button>
+                            <button class="btn btn-danger btn-sm ml-2" @click="deleteExpense(index)">Delete</button>
+                        </div>
                     </li>
                 </ul>
             </div>
@@ -168,9 +178,11 @@
     const flights = ref([]);
     const showAddExpense = ref(false);
     const showSetBudget = ref(false);
+    const showEditExpense = ref(false);
     const newExpense = ref({ amount: 0, category: '' });
+    const editExpenseIndex = ref(null);
     const newBudget = ref(null);
-    const expenseCategories = ['Flights', 'Lodging', 'Car rental', 'Transit', 'Food', 'Sightseeing'];
+    const expenseCategories = ['Flights', 'Lodging', 'Car rental', 'Transit', 'Food', 'Sightseeing', 'Activities', 'Shopping', 'Gas', 'Other'];
 
     const totalSpent = computed(() => {
         return trip.value.expenses.reduce((total, expense) => total + expense.amount, 0);
@@ -197,6 +209,26 @@
         }
     };
 
+    const editExpense = (index) => {
+        editExpenseIndex.value = index;
+        newExpense.value = { ...trip.value.expenses[index] };
+        showEditExpense.value = true;
+    };
+
+    const saveEditedExpense = () => {
+        if (newExpense.value.amount > 0 && newExpense.value.category) {
+            trip.value.expenses[editExpenseIndex.value] = { ...newExpense.value };
+            newExpense.value.amount = 0;
+            newExpense.value.category = '';
+            showEditExpense.value = false;
+            editExpenseIndex.value = null;
+        }
+    };
+
+    const deleteExpense = (index) => {
+        trip.value.expenses.splice(index, 1);
+    };
+
     const saveBudget = () => {
         if (newBudget.value !== null) {
             trip.value.budget = parseFloat(newBudget.value);
@@ -207,6 +239,13 @@
     const cancelSetBudget = () => {
         newBudget.value = null;
         showSetBudget.value = false;
+    };
+
+    const cancelExpense = () => {
+        newExpense.value.amount = 0;
+        newExpense.value.category = '';
+        showAddExpense.value = false;
+        showEditExpense.value = false;
     };
 
     onMounted(() => {
@@ -286,7 +325,7 @@
     }
 
     .hero-section .row {
-        margin: 10vh 0 10vh
+        margin: 10vh 0 10vh;
     }
 
     .expense-category {
@@ -310,4 +349,9 @@
         background-color: #dc3545 !important;
     }
 
+    .list-group-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 </style>
